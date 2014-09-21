@@ -1,69 +1,79 @@
-/*
- */
-
-int sensorPin = A0;    // select the input pin for the potentiometer
-int sensorValue = 0;  // variable to store the value coming from the sensor
-
-
-int rps=0;           //Revoluciones por segundo 
-
-int estado=0;        //1 cuando el iman esta en el sensor, 0 en otro caso
-int anterior=0;      //Guarda el estado anterior del sensor para saber si se activa o no
-int activado=0;      //Si pasa de 0 a 1
-
-int radio=33;        //Radio de la rueda en centimetros
-float velocidad=0;   //Calcula la velocidad en centimetros por segundo
-float kmh=0;         //Velocidad en kilmetros por hora
-
-int cant_velocidades=100;
-float velocidades[100];
-float velocidad_media=0;
-
-void setup() {
-  for(int i=0;i<cant_velocidades;i++){
-    velocidades[i]=0.0;
+float start, finished;    //Variables para medir el tiempo entre cada paso del sensor
+float elapsed, time;      //Tiempo entre cada paso por el sensor
+float elapseds[3];        //Acumula los ultimos tiempos para determinar si la velocidad es cero
+int cant_elapseds=3;      //Cantidad de tiempos acumulados
+int sensores=3;           //Cantidad de sensores en la rueda
+float radio=0.33;         //Distancia del centro de la rueda al sensor (en metros)
+float perimetro;          //Permetro de la rueda donde esta el sensor
+float velocidad;          //Velocidad en KM/h
+float velocidadMax=20;    //Mxima velocidad estimada
+ 
+void setup(){
+  pinMode(2, OUTPUT);
+  pinMode(4, OUTPUT);
+  pinMode(5, OUTPUT);
+  pinMode(6, OUTPUT);
+  float radio=0.33;
+  perimetro=(2.0/sensores)*PI*radio;
+  attachInterrupt(0, calcularVelocidad, RISING); //Se ejecuta la interrupcin cada que pasa por el sensor, en Leonardo es el pin 3
+  start=millis();
+  delay(3000);
+}
+ 
+void calcularVelocidad(){
+  elapsed=millis()-start;
+  start=millis();
+  velocidad=(3600*perimetro)/elapsed;  //Km/h
+}
+ 
+void loop(){
+  //Acumula las velocidades para determinar si la rueda est detenida
+  for(int i=1;i<cant_elapseds;i++){
+    elapseds[i-1]=elapseds[i];
   }
+  elapseds[cant_elapseds-1]=elapsed;
+  boolean iguales=true;
+  for(int i=0;i<cant_elapseds-1;i++){
+    if(elapseds[i]!=elapseds[i+1]){
+      iguales=false;
+    }
+  }
+  if(elapsed>1100&&iguales){
+     velocidad=0.0;
+  }
+  Serial.println(velocidad); //Imprime en el puerto serial
+  prenderVentilador();
+  delay(1000); //Minimiza el parpadeo
 }
 
-void loop() {
-  //Lee la entrada del sensor anlogo
-  sensorValue = analogRead(sensorPin);
-  //Mapea el estado del sensor
-  estado=map(sensorValue,15,600,0,1);
-  //Calcula si cambia a activo o inactivo
-  if(anterior==0&&estado==1){
-    activado=1;
+//Prende leds de acuerdo a la velocidad
+void prenderVentilador(){
+  float incremento=velocidadMax/4;
+  if(velocidad>0.1&&velocidad<=incremento){
+    digitalWrite(2, HIGH);
+    digitalWrite(4, LOW);
+    digitalWrite(5, LOW);
+    digitalWrite(6, LOW);
+  }else if(velocidad>incremento&&velocidad<=(incremento*2)){
+    digitalWrite(2, LOW);
+    digitalWrite(4, HIGH);
+    digitalWrite(5, LOW);
+    digitalWrite(6, LOW);
+  }else if(velocidad>(incremento*2)&&velocidad<=(incremento*3)){
+    digitalWrite(2, LOW);
+    digitalWrite(4, LOW);
+    digitalWrite(5, HIGH);
+    digitalWrite(6, LOW);
+  }else if(velocidad>(incremento*3)){
+    digitalWrite(2, LOW);
+    digitalWrite(4, LOW);
+    digitalWrite(5, LOW);
+    digitalWrite(6, HIGH);
   }else{
-    activado=0;
+    digitalWrite(2, LOW);
+    digitalWrite(4, LOW);
+    digitalWrite(5, LOW);
+    digitalWrite(6, LOW); 
   }
-  anterior=estado;
-  //Cuenta las revoluciones por segundo  
-  if(activado==1){
-    rps++; 
-  }
-  //Reinicia las rps cada segundo
-  if(millis()%1000==0){
-    rps=0;
-  }
-  
-  if(millis()%10==0){
-    velocidad=rps*2*PI*radio;
-    kmh=0.036*velocidad;
-    
-    for(int i=1;i<cant_velocidades;i++){
-      velocidades[i-1]=velocidades[i];
-    }
-    
-    velocidades[cant_velocidades-1]=kmh;
-    
-    
-    float suma_vel=0;
-    for(int i=0;i<cant_velocidades;i++){
-      suma_vel+=velocidades[i];
-    }
-    velocidad_media=suma_vel/cant_velocidades;
-    Serial.println(velocidad_media);
-  }
-  
 }
 

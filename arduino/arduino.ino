@@ -6,7 +6,7 @@ int sensores=3;           //Cantidad de sensores en la rueda
 float radio=0.33;         //Distancia del centro de la rueda al sensor (en metros)
 float perimetro;          //Permetro de la rueda donde esta el sensor
 float velocidad;          //Velocidad en KM/h
-float velocidadMax=20;    //Mxima velocidad estimada
+float velocidadMax=30;    //Mxima velocidad estimada
  
 void setup(){
   pinMode(2, OUTPUT);
@@ -38,8 +38,8 @@ void loop(){
       iguales=false;
     }
   }
-  if(elapsed>1100&&iguales){
-     velocidad=0.0;
+  if(iguales&&(millis()-start)>500){
+    velocidad=0.0;
   }
   Serial.println(velocidad); //Imprime en el puerto serial
   prenderVentilador();

@@ -15,17 +15,25 @@ void setup(){
   pinMode(6, OUTPUT);
   float radio=0.33;
   perimetro=(2.0/sensores)*PI*radio;
-  attachInterrupt(0, calcularVelocidad, RISING); //Se ejecuta la interrupcin cada que pasa por el sensor, en Leonardo es el pin 3
+  //Se ejecuta la interrupcin cada que pasa por el sensor
+  // - en Leonardo es el pin 3 => se escribe 0
+  // - En Mega es el pin 2 => se escribe 
+  // Consultar: http://arduino.cc/en/pmwiki.php?n=Reference/AttachInterrupt
+  attachInterrupt(1, calcularVelocidad, RISING); 
   start=millis();
+  Serial.begin(9600);
   delay(3000);
 }
  
 void calcularVelocidad(){
-  elapsed=millis()-start;
-  start=millis();
-  velocidad=(3600*perimetro)/elapsed;  //Km/h
+  if(millis()!=start){
+    elapsed=millis()-start;
+    start=millis();
+    velocidad=(3600*perimetro)/elapsed;  //Km/h
+    
+  }
 }
- 
+
 void loop(){
   //Acumula las velocidades para determinar si la rueda est detenida
   for(int i=1;i<cant_elapseds;i++){
@@ -41,8 +49,10 @@ void loop(){
   if(iguales&&(millis()-start)>500){
     velocidad=0.0;
   }
-  Serial.println(velocidad); //Imprime en el puerto serial
-  prenderVentilador();
+  if(velocidad<40){
+    Serial.println(velocidad); //Imprime en el puerto serial
+    prenderVentilador();
+  }
   delay(1000); //Minimiza el parpadeo
 }
 

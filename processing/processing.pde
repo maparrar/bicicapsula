@@ -19,10 +19,10 @@ float velocidadNormal=15;  //Velocidad en KM/h a la que el video se reproduce a 
 
 void setup() {
   //size(1640, 360,P2D);
-  size(1280,720,P2D);    //HD
+  size(1280,720);    //HD
   //size(1920,1080);  //Full HD
   background(0);
-  //mov = new Movie(this, "bicicapsula.mp4");
+  //mov = new Movie(this, "tarbena.mp4");
   //mov = new Movie(this, "earth_night_rotate_1080.mov");
   mov = new Movie(this, "xvid_480p_as_l5_1mbps_he-aac_foreign_subs_matrix.mkv");
   mov.loop();
@@ -35,7 +35,6 @@ void movieEvent(Movie movie) {
 }
 
 void draw() {
-  background(0);
   if(tasaContador==tasaDeLectura){
     //Con el puerto
     while (myPort.available() > 0) {
@@ -59,8 +58,7 @@ void draw() {
   
   fill(255);
   text(nfc(velocidadReproduccion, 2) + "X", 10, 30);
-  text(nfc(velocidad, 2) + " Km/h", 10, 50);
-  
+  text(nfc(velocidad, 2) + " Km/h", 10, 50); 
 }
 
 //Especifica la velocidad del video de acuerdo a la velocidad de entrada
@@ -69,7 +67,7 @@ void velocidadVideo(){
   if(velocidadReproduccion==0){
     mov.pause();
   }else{/* if(velocidad>incremento&&velocidad<=(incremento*2)){*/
-    mov.speed(velocidadReproduccion);
     mov.play();
+    mov.speed(velocidadReproduccion);
   }
 }
